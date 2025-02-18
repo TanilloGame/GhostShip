@@ -8,7 +8,8 @@ public class BoardGenerator : MonoBehaviour
     public int height = 7; // Alto del tablero (número de casillas en Z)
     public GameObject tilePrefab; // Prefab de la casilla
     public float tileSize = 1.0f; // Tamaño de cada casilla
-    public float tileSpacing = 1.2f; // Separación entre casillas
+    public float tileSpacingX = 1.2f; // Separación entre casillas en X
+    public float tileSpacingZ = 1.2f; // Separación entre casillas en Z
 
     private GameObject[,] board; // Matriz para almacenar las casillas
 
@@ -26,9 +27,9 @@ public class BoardGenerator : MonoBehaviour
             {
                 // Calcula la posición con el espaciado
                 Vector3 position = new Vector3(
-                    x * (tileSize + tileSpacing), // Posición en X
+                    x * (tileSize + tileSpacingX), // Posición en X
                     0, // Posición en Y
-                    y * (tileSize + tileSpacing)  // Posición en Z
+                    y * (tileSize + tileSpacingZ)  // Posición en Z
                 );
 
                 // Instancia la casilla en la posición calculada

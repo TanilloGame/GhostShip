@@ -8,6 +8,7 @@ public class Troop : MonoBehaviour
     public TroopType troopType;
     public int health;
     public int damage;
+    public int speed; // Velocidad de la tropa
 
     private BoardGenerator boardGenerator;
     private List<Troop> attackers = new List<Troop>(); // Lista de tropas que ya han atacado
@@ -32,11 +33,28 @@ public class Troop : MonoBehaviour
 
     void CheckForEnemies()
     {
-        int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacing));
-        int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacing));
+        int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
+        int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-        CheckTileForEnemy(x - 1, y); // Izquierda
-        CheckTileForEnemy(x + 1, y); // Derecha
+        switch (troopType)
+        {
+            case TroopType.Small:
+                CheckTileForEnemy(x - 1, y); // Izquierda
+                CheckTileForEnemy(x + 1, y); // Derecha
+                break;
+            case TroopType.Medium:
+                CheckTileForEnemy(x - 1, y); // Izquierda
+                CheckTileForEnemy(x + 1, y); // Derecha
+                break;
+            case TroopType.Large:
+                CheckTileForEnemy(x - 1, y); // Izquierda
+                CheckTileForEnemy(x + 1, y); // Derecha
+                CheckTileForEnemy(x - 1, y + 1); // Diagonal izquierda adelante
+                CheckTileForEnemy(x + 1, y + 1); // Diagonal derecha adelante
+                CheckTileForEnemy(x - 1, y - 1); // Diagonal izquierda atrás
+                CheckTileForEnemy(x + 1, y - 1); // Diagonal derecha atrás
+                break;
+        }
     }
 
     void CheckTileForEnemy(int x, int y)
