@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4389748012206761699}
   - component: {fileID: 2296342016977682167}
   - component: {fileID: 4354160728144447436}
+  - component: {fileID: 2359856746221416129}
   m_Layer: 0
   m_Name: Casilla 1
   m_TagString: Tile
@@ -108,3 +109,15 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2359856746221416129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4090007241427581989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c013a12af3409cb49a46743789bb2e77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

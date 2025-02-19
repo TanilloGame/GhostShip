@@ -3,98 +3,120 @@ using UnityEngine;
 
 public class BoardController : MonoBehaviour
 {
+    public static BoardController instance;
+
+    [SerializeField] private GameObject smallTroopP1Prefab;
+    [SerializeField] private GameObject smallTroopP2Prefab;
+    [SerializeField] private GameObject mediumTroopP1Prefab;
+    [SerializeField] private GameObject mediumTroopP2Prefab;
+    [SerializeField] private GameObject largeTroopP1Prefab;
+    [SerializeField] private GameObject largeTroopP2Prefab;
+    [SerializeField] private GameObject emptyPrefab;
     [SerializeField] private BoardState board;
+    public int separacion;
 
-    [Header("Estado del Tablero (Solo para Debug)")]
-    [SerializeField] private List<TroopData> debugBoardState = new List<TroopData>();
-
-    private Dictionary<(int, int), TroopData> boardState = new Dictionary<(int, int), TroopData>();
-
-    void Update()
+    private void Awake()
     {
-        UpdateBoardState(); // Se ejecuta cada frame para reflejar cambios en tiempo real
+        if (instance == null)
+        {
+            instance = this;
+        }
     }
 
-    private void UpdateBoardState()
+    void Start()
     {
-        bool hasChanged = false;
-        Dictionary<(int, int), TroopData> newBoardState = new Dictionary<(int, int), TroopData>();
-        List<TroopData> newDebugList = new List<TroopData>();
+        BoardRepresentation(board);
+    }
 
-        for (int y = 0; y < board.rows.Count; y++)
+    public static void CellSelected(int x, int y)
+    {
+        int currentPlayer = instance.board.playerTurn;
+        TroopType selectedTroop = instance.board.nextTroop;
+
+        instance.board.rows[x].cells[y].troop = selectedTroop;
+        instance.board.rows[x].cells[y].player = currentPlayer;
+
+        instance.MoveOpponentTroops(currentPlayer);
+
+        instance.RegenerateBoard();
+    }
+
+    private void MoveOpponentTroops(int currentPlayer)
+    {
+        List<BoardRow> rows = board.rows;
+        int direction = (currentPlayer == 1) ? -1 : 1;
+
+        for (int i = (direction == -1 ? 1 : rows.Count - 2);
+             direction == -1 ? i < rows.Count : i >= 0;
+             i -= direction)
         {
-            for (int x = 0; x < board.rows[y].cells.Count; x++)
+            for (int j = 0; j < rows[i].cells.Count; j++)
             {
-                BoardCell cell = board.rows[y].cells[x];
-
-                if (cell.troop != TroopType.None)
+                BoardCell cell = rows[i].cells[j];
+                if (cell.player != 0 && cell.player != currentPlayer) // Solo mover tropas enemigas
                 {
-                    TroopData troopData = new TroopData
+                    int newX = i + direction;
+                    if (newX >= 0 && newX < rows.Count)
                     {
-                        position = new Vector2Int(x, y),
-                        troopType = cell.troop,
-                        playerID = cell.player
-                    };
-
-                    newBoardState[(x, y)] = troopData;
-                    newDebugList.Add(troopData);
-
-                    // Detectar cambios en la información del tablero
-                    if (!boardState.ContainsKey((x, y)) || !boardState[(x, y)].Equals(troopData))
-                    {
-                        hasChanged = true;
+                        // Verificamos si la nueva celda está vacía antes de mover la tropa
+                        if (rows[newX].cells[j].troop == TroopType.None)
+                        {
+                            // Mover la tropa a la nueva posición
+                            rows[newX].cells[j] = new BoardCell { troop = cell.troop, player = cell.player };
+                            rows[i].cells[j] = new BoardCell { troop = TroopType.None, player = 0 };
+                        }
                     }
                 }
             }
         }
+    }
 
-        // Si el estado del tablero ha cambiado, actualizar la información
-        if (hasChanged || boardState.Count != newBoardState.Count)
+    private void BoardRepresentation(BoardState boardToRepresent)
+    {
+        foreach (Transform child in transform)
         {
-            boardState = newBoardState;
-            debugBoardState = newDebugList;
+            Destroy(child.gameObject);
+        }
+
+        List<BoardRow> rows = boardToRepresent.rows;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            for (int j = 0; j < rows[i].cells.Count; j++)
+            {
+                BoardRepresentationCell(i, j);
+            }
         }
     }
 
-    public TroopData GetTroopAtPosition(int x, int y)
+    private void BoardRepresentationCell(int x, int y)
     {
-        if (boardState.TryGetValue((x, y), out TroopData troopData))
+        BoardCell cell = board.rows[x].cells[y];
+        GameObject cellUnit = null;
+
+        switch (cell.troop)
         {
-            return troopData;
+            case TroopType.Small:
+                cellUnit = Instantiate(cell.player == 1 ? smallTroopP1Prefab : smallTroopP2Prefab, new Vector3(separacion * y, 0, separacion * x), Quaternion.identity, transform);
+                break;
+            case TroopType.Medium:
+                cellUnit = Instantiate(cell.player == 1 ? mediumTroopP1Prefab : mediumTroopP2Prefab, new Vector3(separacion * y, 0, separacion * x), Quaternion.identity, transform);
+                break;
+            case TroopType.Large:
+                cellUnit = Instantiate(cell.player == 1 ? largeTroopP1Prefab : largeTroopP2Prefab, new Vector3(separacion * y, 0, separacion * x), Quaternion.identity, transform);
+                break;
+            case TroopType.None:
+                cellUnit = Instantiate(emptyPrefab, new Vector3(separacion * y, 0, separacion * x), Quaternion.identity, transform);
+                break;
         }
-        return null;
-    }
 
-    public List<TroopData> GetAllTroops()
-    {
-        return new List<TroopData>(boardState.Values);
-    }
-}
-
-// Estructura para almacenar datos de cada tropa y hacerla visible en el Inspector
-[System.Serializable]
-public class TroopData
-{
-    public Vector2Int position;
-    public TroopType troopType;
-    public int playerID;
-
-    public override bool Equals(object obj)
-    {
-        if (obj is TroopData other)
+        if (cellUnit != null)
         {
-            return position == other.position && troopType == other.troopType && playerID == other.playerID;
+            cellUnit.name = $"Cell_{x}_{y}";
         }
-        return false;
     }
 
-    public override int GetHashCode()
+    public void RegenerateBoard()
     {
-        return position.GetHashCode() ^ troopType.GetHashCode() ^ playerID.GetHashCode();
-    }
-
-    public override string ToString()
-    {
-        return $"Player {playerID} - {troopType} at {position}";
+        BoardRepresentation(board);
     }
 }

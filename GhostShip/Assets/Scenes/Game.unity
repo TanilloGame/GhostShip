@@ -136,7 +136,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &121322960
 Transform:
   m_ObjectHideFlags: 0
@@ -187,8 +187,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b000b1de653f51348b9bcfffd7a4e4c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 6
-  height: 9
+  width: 3
+  height: 3
   tilePrefab: {fileID: 4090007241427581989, guid: 94ddfc51bae46734296ecd72020e2bfd,
     type: 3}
   tileSize: 1
@@ -663,30 +663,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc600c818f7b2d74e9dc42277d66d308, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  smallTroopP1Prefab: {fileID: 3194540564783735399, guid: 05229aa453f4d2442b4f10607333a32b,
+    type: 3}
+  smallTroopP2Prefab: {fileID: 4943791071941827707, guid: 9a05c78f21f698a4faf3758063b9bf98,
+    type: 3}
+  mediumTroopP1Prefab: {fileID: 8826694549830327627, guid: df1e2e9fe3a63ab45a60fb58ab08fe0d,
+    type: 3}
+  mediumTroopP2Prefab: {fileID: 1208345294068342266, guid: ca793f05dddaa5b48b869d5035bb50bd,
+    type: 3}
+  largeTroopP1Prefab: {fileID: 8851130539365483604, guid: 7d5aeeb274680e049bf04954becc21a7,
+    type: 3}
+  largeTroopP2Prefab: {fileID: 5236747298126081864, guid: ff1bd93e85c3a8741b2baa417aaa1bf7,
+    type: 3}
+  emptyPrefab: {fileID: 4090007241427581989, guid: 94ddfc51bae46734296ecd72020e2bfd,
+    type: 3}
   board:
     rows:
     - cells:
-      - troop: 1
+      - troop: 0
         player: 2
-      - troop: 1
-        player: 2
-    - cells:
-      - troop: 1
-        player: 2
-      - troop: 1
-        player: 2
-    - cells:
-      - troop: 1
-        player: 2
-      - troop: 1
-        player: 2
+      - troop: 0
+        player: 1
+      - troop: 0
+        player: 1
     - cells:
       - troop: 0
         player: 0
       - troop: 0
         player: 0
-    playerTurn: 0
-    nextTroop: 0
+      - troop: 0
+        player: 0
+    - cells:
+      - troop: 0
+        player: 2
+      - troop: 0
+        player: 2
+      - troop: 0
+        player: 2
+    playerTurn: 1
+    nextTroop: 1
+  separacion: 3
 --- !u!4 &1771018100
 Transform:
   m_ObjectHideFlags: 0
