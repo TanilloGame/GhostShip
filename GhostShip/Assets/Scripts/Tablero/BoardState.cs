@@ -7,7 +7,7 @@ public enum TroopType { None, Small, Medium, Large };
 [System.Serializable]
 public class BoardCell 
 {
-    public enum TroopType {None, Small, Medium, Large};
+    
 
     public TroopType troop;
     public int player; 
