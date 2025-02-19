@@ -11,68 +11,67 @@ public class Troop : MonoBehaviour
     public int speed; // Velocidad de la tropa
 
     private BoardGenerator boardGenerator;
-    private List<Troop> attackers = new List<Troop>(); // Lista de tropas que ya han atacado
     private Renderer troopRenderer;
     private SpriteRenderer spriteRenderer;
-    private bool isBlinking = false; // Controla si el efecto de parpadeo está activo
+    private bool isBlinking = false;
 
     void Start()
     {
         boardGenerator = FindObjectOfType<BoardGenerator>();
-
         troopRenderer = GetComponent<Renderer>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-
-        if (troopRenderer == null && spriteRenderer == null)
-        {
-            Debug.LogError("No se encontró un Renderer en " + gameObject.name);
-        }
-
-        InvokeRepeating(nameof(CheckForEnemies), 1f, 1f); // Comprobar enemigos cada segundo
     }
 
-    void CheckForEnemies()
+    public void MoveAndAttack()
     {
         int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
         int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-        switch (troopType)
+        int targetX = gameObject.CompareTag("Player1Troop") ? x + 1 : x - 1;
+
+        if (CanMoveToTile(targetX, y, out Troop enemyTroop))
         {
-            case TroopType.Small:
-                CheckTileForEnemy(x - 1, y); // Izquierda
-                CheckTileForEnemy(x + 1, y); // Derecha
-                break;
-            case TroopType.Medium:
-                CheckTileForEnemy(x - 1, y); // Izquierda
-                CheckTileForEnemy(x + 1, y); // Derecha
-                break;
-            case TroopType.Large:
-                CheckTileForEnemy(x - 1, y); // Izquierda
-                CheckTileForEnemy(x + 1, y); // Derecha
-                CheckTileForEnemy(x - 1, y + 1); // Diagonal izquierda adelante
-                CheckTileForEnemy(x + 1, y + 1); // Diagonal derecha adelante
-                CheckTileForEnemy(x - 1, y - 1); // Diagonal izquierda atrás
-                CheckTileForEnemy(x + 1, y - 1); // Diagonal derecha atrás
-                break;
+            if (enemyTroop != null)
+            {
+                // Si hay un enemigo, decidir si atacarlo o no
+                if (IsStrongerThan(enemyTroop))
+                {
+                    enemyTroop.Die();
+                    MoveTo(targetX, y);
+                }
+            }
+            else
+            {
+                // Si no hay enemigo, simplemente avanzar
+                MoveTo(targetX, y);
+            }
         }
     }
 
-    void CheckTileForEnemy(int x, int y)
+    bool CanMoveToTile(int x, int y, out Troop enemyTroop)
     {
+        enemyTroop = null;
         GameObject tile = boardGenerator.GetTile(x, y);
-        if (tile != null)
+        if (tile == null) return false;
+
+        Collider[] colliders = Physics.OverlapSphere(tile.transform.position, 0.1f);
+        foreach (Collider collider in colliders)
         {
-            Collider[] colliders = Physics.OverlapSphere(tile.transform.position, 0.1f);
-            foreach (Collider collider in colliders)
+            Troop foundTroop = collider.GetComponent<Troop>();
+            if (foundTroop != null)
             {
-                Troop enemyTroop = collider.GetComponent<Troop>();
-                if (enemyTroop != null && IsEnemy(enemyTroop) && !attackers.Contains(enemyTroop))
+                if (IsEnemy(foundTroop))
                 {
-                    Attack(enemyTroop);
-                    attackers.Add(enemyTroop); // Registra que ya atacó a esta tropa
+                    enemyTroop = foundTroop;
+                    return true; // Puede atacar si es más fuerte
+                }
+                else
+                {
+                    return false; // No se atraviesa con sus propias tropas
                 }
             }
         }
+        return true; // La casilla está vacía
     }
 
     bool IsEnemy(Troop other)
@@ -81,45 +80,21 @@ public class Troop : MonoBehaviour
                (gameObject.CompareTag("Player2Troop") && other.CompareTag("Player1Troop"));
     }
 
-    void Attack(Troop enemy)
+    bool IsStrongerThan(Troop enemy)
     {
-        enemy.TakeDamage(damage);
+        return (troopType == TroopType.Large && enemy.troopType != TroopType.Large) ||
+               (troopType == TroopType.Medium && enemy.troopType == TroopType.Small) ||
+               (troopType == TroopType.Small && enemy.troopType == TroopType.Small);
     }
 
-    public void TakeDamage(int amount)
+    void MoveTo(int x, int y)
     {
-        health -= amount;
-
-        // Activa el efecto de parpadeo si no está activo ya
-        if (!isBlinking)
-        {
-            StartCoroutine(DamageEffect());
-        }
-
-        if (health <= 0)
-        {
-            Die();
-        }
-    }
-
-    IEnumerator DamageEffect()
-    {
-        isBlinking = true; // Indica que el efecto de parpadeo está activo
-
-        for (int i = 0; i < 4; i++) // Parpadeo (4 ciclos)
-        {
-            // Desactiva el MeshRenderer para el parpadeo
-            if (troopRenderer != null) troopRenderer.enabled = false;
-
-            yield return new WaitForSeconds(0.1f);
-
-            // Reactiva el MeshRenderer
-            if (troopRenderer != null) troopRenderer.enabled = true;
-
-            yield return new WaitForSeconds(0.1f);
-        }
-
-        isBlinking = false; // Indica que el efecto de parpadeo ha terminado
+        Vector3 targetPosition = new Vector3(
+            x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
+            transform.position.y,
+            y * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
+        );
+        transform.position = targetPosition;
     }
 
     void Die()

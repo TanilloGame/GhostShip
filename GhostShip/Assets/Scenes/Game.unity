@@ -322,6 +322,60 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1283563204
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1283563206}
+  - component: {fileID: 1283563205}
+  m_Layer: 0
+  m_Name: TroopSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1283563205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1283563204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df10ee9db4f577745862f61dec4c547d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boardGenerator: {fileID: 121322962}
+  smallTroopPrefab: {fileID: 4943791071941827707, guid: 9a05c78f21f698a4faf3758063b9bf98,
+    type: 3}
+  mediumTroopPrefab: {fileID: 1208345294068342266, guid: ca793f05dddaa5b48b869d5035bb50bd,
+    type: 3}
+  largeTroopPrefab: {fileID: 5236747298126081864, guid: ff1bd93e85c3a8741b2baa417aaa1bf7,
+    type: 3}
+  xPosition: 0
+  yPosition: 0
+  troopType: 0
+--- !u!4 &1283563206
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1283563204}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.205183, y: -5.073717, z: 11.385225}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1416223227
 GameObject:
   m_ObjectHideFlags: 0
@@ -797,3 +851,4 @@ SceneRoots:
   - {fileID: 1416223231}
   - {fileID: 1932848471}
   - {fileID: 1771018100}
+  - {fileID: 1283563206}

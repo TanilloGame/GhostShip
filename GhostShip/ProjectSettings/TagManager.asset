@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Player1Troop
   - Player2Troop
+  - Tile
   layers:
   - Default
   - TransparentFX

@@ -1,22 +1,25 @@
 using UnityEngine;
 using DG.Tweening;
+using System.Linq;
 
 public class TileSelector : MonoBehaviour
 {
     public BoardGenerator boardGenerator;
     public TurnManager turnManager;
 
-    public GameObject[] player1Troops; // Tropas del jugador 1
-    public GameObject[] player2Troops; // Tropas del jugador 2
-    public Color highlightColor = Color.yellow; // Color para resaltar la casilla
+    public GameObject[] player1Troops;
+    public GameObject[] player2Troops;
+    public Color highlightColor = Color.yellow;
 
     private int player1TroopIndex = 0;
     private int player2TroopIndex = 0;
-    private GameObject lastHighlightedTile; // Última casilla resaltada
-    private Color originalTileColor; // Color original de la casilla
+    private GameObject lastHighlightedTile;
+    private Color originalTileColor;
 
     void Update()
     {
+        if (boardGenerator == null || turnManager == null) return;
+
         HandleMouseHover();
         HandleMouseClick();
     }
@@ -30,37 +33,31 @@ public class TileSelector : MonoBehaviour
         {
             GameObject tile = hit.collider.gameObject;
 
+            if (!tile.CompareTag("Tile")) return; // Asegurar que sea una casilla válida
+
             int x = Mathf.RoundToInt(tile.transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
             int y = Mathf.RoundToInt(tile.transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-            // Verifica si la casilla es válida para instanciar una tropa
             bool isValidTile = (turnManager.currentPlayer == TurnManager.Player.Player1 && y == 0) ||
                                (turnManager.currentPlayer == TurnManager.Player.Player2 && y == boardGenerator.height - 1);
 
             if (isValidTile && !IsTileOccupied(x, y))
             {
-                // Resaltar la nueva casilla
-                if (lastHighlightedTile != null && lastHighlightedTile != tile)
+                if (lastHighlightedTile != tile)
                 {
                     ResetTileColor(lastHighlightedTile);
-                }
-
-                if (tile != lastHighlightedTile)
-                {
                     HighlightTile(tile);
                     lastHighlightedTile = tile;
                 }
             }
-            else if (lastHighlightedTile != null)
+            else
             {
-                // Restaurar el color de la última casilla resaltada
                 ResetTileColor(lastHighlightedTile);
                 lastHighlightedTile = null;
             }
         }
-        else if (lastHighlightedTile != null)
+        else
         {
-            // Si el ratón no está sobre ninguna casilla, restaurar el color
             ResetTileColor(lastHighlightedTile);
             lastHighlightedTile = null;
         }
@@ -79,7 +76,6 @@ public class TileSelector : MonoBehaviour
         int x = Mathf.RoundToInt(tile.transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
         int y = Mathf.RoundToInt(tile.transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-        // Verifica si la casilla es válida y no está ocupada
         if ((turnManager.currentPlayer == TurnManager.Player.Player1 && y == 0) ||
             (turnManager.currentPlayer == TurnManager.Player.Player2 && y == boardGenerator.height - 1))
         {
@@ -96,17 +92,17 @@ public class TileSelector : MonoBehaviour
 
     void PlaceTroop(int x, int y)
     {
-        GameObject troopPrefab;
+        GameObject troopPrefab = (turnManager.currentPlayer == TurnManager.Player.Player1)
+            ? player1Troops[player1TroopIndex]
+            : player2Troops[player2TroopIndex];
 
         if (turnManager.currentPlayer == TurnManager.Player.Player1)
         {
-            troopPrefab = player1Troops[player1TroopIndex];
-            player1TroopIndex = (player1TroopIndex + 1) % player1Troops.Length; // Avanzar al siguiente índice
+            player1TroopIndex = (player1TroopIndex + 1) % player1Troops.Length;
         }
         else
         {
-            troopPrefab = player2Troops[player2TroopIndex];
-            player2TroopIndex = (player2TroopIndex + 1) % player2Troops.Length; // Avanzar al siguiente índice
+            player2TroopIndex = (player2TroopIndex + 1) % player2Troops.Length;
         }
 
         Vector3 position = new Vector3(
@@ -119,7 +115,7 @@ public class TileSelector : MonoBehaviour
             ? Quaternion.identity
             : Quaternion.Euler(0, 180, 0);
 
-        GameObject newTroop = Instantiate(troopPrefab, position, rotation);
+        Instantiate(troopPrefab, position, rotation);
         turnManager.EndTurn();
 
         MoveTroopsForward();
@@ -133,111 +129,86 @@ public class TileSelector : MonoBehaviour
             y * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
         );
 
-        Collider[] colliders = Physics.OverlapSphere(position, 0.1f);
-        foreach (Collider collider in colliders)
-        {
-            if (collider.GetComponent<Troop>() != null)
-            {
-                return true; // Hay una tropa en la casilla
-            }
-        }
-        return false; // No hay tropas en la casilla
+        return Physics.OverlapSphere(position, 0.1f).Any(collider => collider.GetComponent<Troop>() != null);
     }
 
     void HighlightTile(GameObject tile)
     {
+        if (tile == null) return;
         Renderer renderer = tile.GetComponent<Renderer>();
         if (renderer != null)
         {
-            originalTileColor = renderer.material.color; // Guarda el color original
-            renderer.material.color = highlightColor; // Cambia el color a resaltado
+            originalTileColor = renderer.material.color;
+            renderer.material.color = highlightColor;
         }
     }
 
     void ResetTileColor(GameObject tile)
     {
+        if (tile == null) return;
         Renderer renderer = tile.GetComponent<Renderer>();
         if (renderer != null)
         {
-            renderer.material.color = originalTileColor; // Restaura el color original
+            renderer.material.color = originalTileColor;
         }
     }
 
     private Camera GetActiveCamera()
     {
-        return turnManager.currentPlayer == TurnManager.Player.Player1
+        return (turnManager.currentPlayer == TurnManager.Player.Player1)
             ? turnManager.player1Camera
             : turnManager.player2Camera;
     }
 
     void MoveTroopsForward()
     {
-        // Filtramos las tropas para obtener solo las del jugador correspondiente.
-        Troop[] allTroops = FindObjectsOfType<Troop>();
+        Troop[] allTroops = FindObjectsOfType<Troop>()
+            .OrderBy(t => t.transform.position.z).ToArray();
 
         foreach (Troop troop in allTroops)
         {
-            // Obtener la tropa del jugador correcto
-            bool isPlayer1Troop = (turnManager.currentPlayer == TurnManager.Player.Player1 && troop.CompareTag("Player1Troop"));
-            bool isPlayer2Troop = (turnManager.currentPlayer == TurnManager.Player.Player2 && troop.CompareTag("Player2Troop"));
-
-            if (isPlayer1Troop || isPlayer2Troop)
+            if ((turnManager.currentPlayer == TurnManager.Player.Player1 && troop.CompareTag("Player1Troop")) ||
+                (turnManager.currentPlayer == TurnManager.Player.Player2 && troop.CompareTag("Player2Troop")))
             {
-                // Obtener la posición actual de la tropa en coordenadas del tablero
                 int x = Mathf.RoundToInt(troop.transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
                 int y = Mathf.RoundToInt(troop.transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-                // Determinar dirección de movimiento según el jugador
                 int direction = (turnManager.currentPlayer == TurnManager.Player.Player1) ? 1 : -1;
 
                 for (int i = 0; i < troop.speed; i++)
                 {
                     int newY = y + direction;
 
-                    // Verificar si la tropa puede moverse (dentro del tablero y sin colisiones)
                     if (newY >= 0 && newY < boardGenerator.height)
                     {
-                        if (!IsTileOccupied(x, newY))
+                        Troop enemyTroop = GetTroopAtPosition(x, newY);
+                        if (enemyTroop != null)
                         {
-                            Vector3 newPosition = new Vector3(
-                                x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
-                                0.5f,
-                                newY * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
-                            );
-
-                            // Mover usando DOTween para una animación suave
-                            troop.transform.DOMove(newPosition, 0.5f).SetEase(Ease.OutQuad);
-                            y = newY; // Actualizar la posición actual
-                        }
-                        else
-                        {
-                            Troop enemyTroop = GetTroopAtPosition(x, newY);
-                            if (enemyTroop != null)
+                            if (IsEnemy(troop, enemyTroop))
                             {
-                                if (troop.troopType == enemyTroop.troopType)
+                                if (troop.troopType > enemyTroop.troopType)
                                 {
-                                    // Si son del mismo tipo, ambas tropas se quedan quietas
-                                    break;
+                                    Destroy(enemyTroop.gameObject);
                                 }
                                 else
                                 {
-                                    // Si la tropa en frente es más poderosa, destruir la más débil
-                                    if (troop.damage > enemyTroop.damage)
-                                    {
-                                        Destroy(enemyTroop.gameObject);
-                                    }
-                                    else
-                                    {
-                                        Destroy(troop.gameObject);
-                                        break;
-                                    }
+                                    break;
                                 }
                             }
+                            else
+                            {
+                                break;
+                            }
                         }
-                    }
-                    else
-                    {
-                        break; // Detener el movimiento si no se puede avanzar más
+
+                        Vector3 newPosition = new Vector3(
+                            x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
+                            0.5f,
+                            newY * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
+                        );
+
+                        troop.transform.DOMove(newPosition, 0.5f).SetEase(Ease.OutQuad);
+                        y = newY;
                     }
                 }
             }
@@ -252,15 +223,13 @@ public class TileSelector : MonoBehaviour
             y * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
         );
 
-        Collider[] colliders = Physics.OverlapSphere(position, 0.1f);
-        foreach (Collider collider in colliders)
-        {
-            Troop troop = collider.GetComponent<Troop>();
-            if (troop != null)
-            {
-                return troop;
-            }
-        }
-        return null;
+        return Physics.OverlapSphere(position, 0.1f)
+            .Select(collider => collider.GetComponent<Troop>())
+            .FirstOrDefault(t => t != null);
+    }
+
+    bool IsEnemy(Troop troop, Troop other)
+    {
+        return troop.CompareTag("Player1Troop") != other.CompareTag("Player1Troop");
     }
 }
