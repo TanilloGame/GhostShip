@@ -175,6 +175,7 @@ public class TileSelector : MonoBehaviour
 
                 int direction = (turnManager.currentPlayer == TurnManager.Player.Player1) ? 1 : -1;
 
+                // Movemos la tropa en varias etapas
                 for (int i = 0; i < troop.speed; i++)
                 {
                     int newY = y + direction;
@@ -182,37 +183,87 @@ public class TileSelector : MonoBehaviour
                     if (newY >= 0 && newY < boardGenerator.height)
                     {
                         Troop enemyTroop = GetTroopAtPosition(x, newY);
+
                         if (enemyTroop != null)
                         {
                             if (IsEnemy(troop, enemyTroop))
                             {
                                 if (troop.troopType > enemyTroop.troopType)
                                 {
+                                    // Destruye la tropa enemiga si la tropa actual es más fuerte
                                     Destroy(enemyTroop.gameObject);
+                                    // La tropa avanza a la posición del enemigo
+                                    Vector3 newPosition = new Vector3(
+                                        x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
+                                        0.5f,
+                                        newY * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
+                                    );
+
+                                    troop.transform.DOMove(newPosition, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
+                                    {
+                                        AttackEnemyTroop(troop, enemyTroop);
+                                    });
+                                    y = newY; // Actualiza la posición de la tropa
+                                }
+                                else if (troop.troopType == enemyTroop.troopType)
+                                {
+                                    // Si son del mismo tipo, ambas se detienen
+                                    break;
                                 }
                                 else
                                 {
+                                    // Si la tropa enemiga es más fuerte, la tropa actual se detiene
                                     break;
                                 }
                             }
                             else
                             {
+                                // Si es una tropa aliada, no puede avanzar
                                 break;
                             }
                         }
+                        else
+                        {
+                            // Si no hay tropa enemiga, simplemente avanza
+                            Vector3 newPosition = new Vector3(
+                                x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
+                                0.5f,
+                                newY * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
+                            );
 
-                        Vector3 newPosition = new Vector3(
-                            x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
-                            0.5f,
-                            newY * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
-                        );
-
-                        troop.transform.DOMove(newPosition, 0.5f).SetEase(Ease.OutQuad);
-                        y = newY;
+                            troop.transform.DOMove(newPosition, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
+                            {
+                                // Cuando el movimiento haya terminado, verificamos si debe atacar
+                                AttackEnemyTroop(troop, null);
+                            });
+                            y = newY; // Actualiza la posición de la tropa
+                        }
                     }
                 }
             }
         }
+    }
+
+    void AttackEnemyTroop(Troop troop, Troop enemyTroop)
+    {
+        if (enemyTroop != null)
+        {
+            // Aquí se puede implementar la lógica para el ataque entre tropas
+            Debug.Log($"{troop.name} ataca a {enemyTroop.name}");
+            // Realiza el daño o la destrucción aquí
+        }
+        else
+        {
+            Debug.Log($"{troop.name} avanza sin atacar.");
+        }
+    }
+
+    void AttackEnemy(Troop attacker, Troop enemy)
+    {
+        // Lógica de ataque, puedes incluir efectos de daño, animaciones o eliminación
+        Debug.Log($"{attacker.name} atacó a {enemy.name}");
+        // Ejemplo: destruir la tropa enemiga
+        Destroy(enemy.gameObject);
     }
 
     Troop GetTroopAtPosition(int x, int y)

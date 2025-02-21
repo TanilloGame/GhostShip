@@ -136,7 +136,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &121322960
 Transform:
   m_ObjectHideFlags: 0
@@ -168,12 +168,8 @@ MonoBehaviour:
   turnManager: {fileID: 1011110478}
   player1Troops:
   - {fileID: 3194540564783735399, guid: 05229aa453f4d2442b4f10607333a32b, type: 3}
-  - {fileID: 8826694549830327627, guid: df1e2e9fe3a63ab45a60fb58ab08fe0d, type: 3}
-  - {fileID: 8851130539365483604, guid: 7d5aeeb274680e049bf04954becc21a7, type: 3}
   player2Troops:
   - {fileID: 4943791071941827707, guid: 9a05c78f21f698a4faf3758063b9bf98, type: 3}
-  - {fileID: 1208345294068342266, guid: ca793f05dddaa5b48b869d5035bb50bd, type: 3}
-  - {fileID: 5236747298126081864, guid: ff1bd93e85c3a8741b2baa417aaa1bf7, type: 3}
   highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!114 &121322962
 MonoBehaviour:
@@ -187,13 +183,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b000b1de653f51348b9bcfffd7a4e4c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 3
-  height: 3
+  width: 9
+  height: 9
   tilePrefab: {fileID: 4090007241427581989, guid: 94ddfc51bae46734296ecd72020e2bfd,
     type: 3}
   tileSize: 1
-  tileSpacingX: 2
+  tileSpacingX: 1
   tileSpacingZ: 2
+  waveSpeed: 0.7
+  waveFrequency: 0.7
+  waveHeight: 0.3
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -650,7 +649,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1771018099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -658,7 +657,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1771018098}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc600c818f7b2d74e9dc42277d66d308, type: 3}
   m_Name: 

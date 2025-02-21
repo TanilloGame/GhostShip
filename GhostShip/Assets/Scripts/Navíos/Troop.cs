@@ -9,17 +9,38 @@ public class Troop : MonoBehaviour
     public int health;
     public int damage;
     public int speed; // Velocidad de la tropa
+    public int attackValue; // Valor de ataque asignado
 
     private BoardGenerator boardGenerator;
     private Renderer troopRenderer;
     private SpriteRenderer spriteRenderer;
     private bool isBlinking = false;
+    private Vector3 targetPosition;
+    private bool isMoving = false;
+    private float moveDuration = 0.5f; // Duración del movimiento
+    private float moveTimer = 0f;
+    public ParticleSystem cannonSmokePrefab;
 
     void Start()
     {
         boardGenerator = FindObjectOfType<BoardGenerator>();
         troopRenderer = GetComponent<Renderer>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+        // Registrar la tropa en el BoardGenerator
+        if (boardGenerator != null)
+        {
+            boardGenerator.RegisterTroop(this);
+        }
+    }
+
+    void OnDestroy()
+    {
+        // Desregistrar la tropa del BoardGenerator cuando es destruida
+        if (boardGenerator != null)
+        {
+            boardGenerator.UnregisterTroop(this);
+        }
     }
 
     public void MoveAndAttack()
@@ -27,27 +48,85 @@ public class Troop : MonoBehaviour
         int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
         int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-        int targetX = gameObject.CompareTag("Player1Troop") ? x + 1 : x - 1;
+        // Determinar la dirección de movimiento
+        int moveDirection = gameObject.CompareTag("Player1Troop") ? 1 : -1;
+        int targetX = x + moveDirection;
 
-        if (CanMoveToTile(targetX, y, out Troop enemyTroop))
+        // Mover la tropa hacia adelante
+        MoveTo(targetX, y);
+    }
+
+    void MoveTo(int x, int y)
+    {
+        targetPosition = new Vector3(
+            x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
+            transform.position.y,
+            y * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
+        );
+        isMoving = true;
+        moveTimer = 0f;
+    }
+
+    void Update()
+    {
+        if (isMoving)
         {
-            if (enemyTroop != null)
+            moveTimer += Time.deltaTime;
+            float t = moveTimer / moveDuration;
+            transform.position = Vector3.Lerp(transform.position, targetPosition, t);
+
+            if (t >= 1f)
             {
-                // Si hay un enemigo, decidir si atacarlo o no
-                if (IsStrongerThan(enemyTroop))
-                {
-                    enemyTroop.Die();
-                    MoveTo(targetX, y);
-                }
+                isMoving = false;
+                // Comprobar ataque después de moverse
+                CheckForAttack();
             }
-            else
+        }
+
+        ApplyWaveMotion();
+    }
+
+    private void CheckForAttack()
+    {
+        int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
+        int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
+
+        Debug.Log($"Checking for attack at position ({x}, {y})");
+
+        // Comprobar casillas a la izquierda y derecha
+        for (int dx = -1; dx <= 1; dx += 2) // -1 para izquierda, 1 para derecha
+        {
+            int targetX = x + dx;
+            Debug.Log($"Checking tile at ({targetX}, {y})");
+
+            // Si el valor de ataque es mayor que 0 y hay un enemigo en la casilla, realizar ataque
+            if (CanMoveToTile(targetX, y, out Troop enemyTroop) && enemyTroop != null && attackValue > 0)
             {
-                // Si no hay enemigo, simplemente avanzar
-                MoveTo(targetX, y);
+                Debug.Log($"Attacking enemy at ({targetX}, {y})");
+                // Si hay un enemigo, atacar
+                AttackEnemy(enemyTroop, targetX, y);
+                return;
             }
         }
     }
 
+    void AttackEnemy(Troop enemyTroop, int targetX, int targetY)
+    {
+        // Instanciar el sistema de partículas (humo o efecto de disparo)
+        Vector3 smokePosition = transform.position + new Vector3(0, 0.5f, 0); // Ajusta la posición según sea necesario
+        ParticleSystem smoke = Instantiate(cannonSmokePrefab, smokePosition, Quaternion.identity);
+        smoke.Play();
+
+        // Iluminar brevemente la casilla atacada en rojo
+        GameObject tile = boardGenerator.GetTile(targetX, targetY);
+        if (tile != null)
+        {
+            StartCoroutine(HighlightTile(tile));
+        }
+
+        // Realizar el ataque al enemigo
+        enemyTroop.Die();
+    }
     bool CanMoveToTile(int x, int y, out Troop enemyTroop)
     {
         enemyTroop = null;
@@ -60,45 +139,51 @@ public class Troop : MonoBehaviour
             Troop foundTroop = collider.GetComponent<Troop>();
             if (foundTroop != null)
             {
-                if (IsEnemy(foundTroop))
+                if (IsEnemy(foundTroop))  // Comprobar si es una tropa enemiga
                 {
                     enemyTroop = foundTroop;
-                    return true; // Puede atacar si es más fuerte
+                    return true; // Hay un enemigo al que atacar
                 }
                 else
                 {
-                    return false; // No se atraviesa con sus propias tropas
+                    return false; // No es una tropa enemiga, no atacar
                 }
             }
         }
-        return true; // La casilla está vacía
+        return true; // La casilla está vacía o no hay tropas en ella
     }
-
     bool IsEnemy(Troop other)
     {
+        // Compara si las tropas son enemigas según sus etiquetas
         return (gameObject.CompareTag("Player1Troop") && other.CompareTag("Player2Troop")) ||
                (gameObject.CompareTag("Player2Troop") && other.CompareTag("Player1Troop"));
-    }
-
-    bool IsStrongerThan(Troop enemy)
-    {
-        return (troopType == TroopType.Large && enemy.troopType != TroopType.Large) ||
-               (troopType == TroopType.Medium && enemy.troopType == TroopType.Small) ||
-               (troopType == TroopType.Small && enemy.troopType == TroopType.Small);
-    }
-
-    void MoveTo(int x, int y)
-    {
-        Vector3 targetPosition = new Vector3(
-            x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
-            transform.position.y,
-            y * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
-        );
-        transform.position = targetPosition;
     }
 
     void Die()
     {
         Destroy(gameObject);
+    }
+
+    private void ApplyWaveMotion()
+    {
+        int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
+        int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
+
+        // Calcula el desplazamiento de la onda
+        float waveOffset = Mathf.Sin((x + y) * boardGenerator.waveFrequency + Time.time * boardGenerator.waveSpeed);
+
+        // Aplica el desplazamiento en el eje Y
+        Vector3 newPosition = transform.position;
+        newPosition.y = waveOffset * boardGenerator.waveHeight + 0.5f; // Ajusta la altura para que la tropa esté ligeramente por encima de la casilla
+        transform.position = newPosition;
+    }
+
+    private IEnumerator HighlightTile(GameObject tile)
+    {
+        Renderer tileRenderer = tile.GetComponent<Renderer>();
+        Color originalColor = tileRenderer.material.color;
+        tileRenderer.material.color = Color.red;  // Ilumina la casilla en rojo
+        yield return new WaitForSeconds(0.5f);
+        tileRenderer.material.color = originalColor;  // Restaura el color original
     }
 }
