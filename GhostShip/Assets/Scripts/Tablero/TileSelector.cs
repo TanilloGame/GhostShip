@@ -175,7 +175,6 @@ public class TileSelector : MonoBehaviour
 
                 int direction = (turnManager.currentPlayer == TurnManager.Player.Player1) ? 1 : -1;
 
-                // Movemos la tropa en varias etapas
                 for (int i = 0; i < troop.speed; i++)
                 {
                     int newY = y + direction;
@@ -190,9 +189,8 @@ public class TileSelector : MonoBehaviour
                             {
                                 if (troop.troopType > enemyTroop.troopType)
                                 {
-                                    // Destruye la tropa enemiga si la tropa actual es más fuerte
                                     Destroy(enemyTroop.gameObject);
-                                    // La tropa avanza a la posición del enemigo
+
                                     Vector3 newPosition = new Vector3(
                                         x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
                                         0.5f,
@@ -203,28 +201,24 @@ public class TileSelector : MonoBehaviour
                                     {
                                         AttackEnemyTroop(troop, enemyTroop);
                                     });
-                                    y = newY; // Actualiza la posición de la tropa
+                                    y = newY;
                                 }
                                 else if (troop.troopType == enemyTroop.troopType)
                                 {
-                                    // Si son del mismo tipo, ambas se detienen
                                     break;
                                 }
                                 else
                                 {
-                                    // Si la tropa enemiga es más fuerte, la tropa actual se detiene
                                     break;
                                 }
                             }
                             else
                             {
-                                // Si es una tropa aliada, no puede avanzar
                                 break;
                             }
                         }
                         else
                         {
-                            // Si no hay tropa enemiga, simplemente avanza
                             Vector3 newPosition = new Vector3(
                                 x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
                                 0.5f,
@@ -233,10 +227,9 @@ public class TileSelector : MonoBehaviour
 
                             troop.transform.DOMove(newPosition, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
                             {
-                                // Cuando el movimiento haya terminado, verificamos si debe atacar
                                 AttackEnemyTroop(troop, null);
                             });
-                            y = newY; // Actualiza la posición de la tropa
+                            y = newY;
                         }
                     }
                 }
@@ -244,43 +237,61 @@ public class TileSelector : MonoBehaviour
         }
     }
 
-    void AttackEnemyTroop(Troop troop, Troop enemyTroop)
+    private Troop GetTroopAtPosition(int x, int y)
     {
-        if (enemyTroop != null)
+        GameObject tile = boardGenerator.GetTile(x, y);
+        if (tile != null)
         {
-            // Aquí se puede implementar la lógica para el ataque entre tropas
-            Debug.Log($"{troop.name} ataca a {enemyTroop.name}");
-            // Realiza el daño o la destrucción aquí
+            Collider[] colliders = Physics.OverlapSphere(tile.transform.position, 0.1f);
+            foreach (Collider collider in colliders)
+            {
+                Troop troop = collider.GetComponent<Troop>();
+                if (troop != null)
+                {
+                    return troop;
+                }
+            }
+        }
+        return null;
+    }
+
+    private bool IsEnemy(Troop troop1, Troop troop2)
+    {
+        return (troop1.CompareTag("Player1Troop") && troop2.CompareTag("Player2Troop")) ||
+               (troop1.CompareTag("Player2Troop") && troop2.CompareTag("Player1Troop"));
+    }
+
+    private void AttackEnemyTroop(Troop attacker, Troop defender)
+    {
+        if (defender != null)
+        {
+            Debug.Log($"{attacker.name} está atacando a {defender.name}");
+            defender.TakeDamage(attacker.damage);
         }
         else
         {
-            Debug.Log($"{troop.name} avanza sin atacar.");
+            CheckForSideAttacks(attacker);
         }
     }
 
-    void AttackEnemy(Troop attacker, Troop enemy)
+    private void CheckForSideAttacks(Troop troop)
     {
-        // Lógica de ataque, puedes incluir efectos de daño, animaciones o eliminación
-        Debug.Log($"{attacker.name} atacó a {enemy.name}");
-        // Ejemplo: destruir la tropa enemiga
-        Destroy(enemy.gameObject);
+        int x = Mathf.RoundToInt(troop.transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
+        int y = Mathf.RoundToInt(troop.transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
+
+        bool canAttackLeft = CheckForEnemyAtPosition(x - 1, y, troop);
+        bool canAttackRight = CheckForEnemyAtPosition(x + 1, y, troop);
+
+        if (canAttackLeft || canAttackRight)
+        {
+            Debug.Log($"Tropa detectada a la izquierda o derecha en la posición ({x - 1}, {y}) o ({x + 1}, {y})");
+        }
     }
 
-    Troop GetTroopAtPosition(int x, int y)
+    private bool CheckForEnemyAtPosition(int x, int y, Troop troop)
     {
-        Vector3 position = new Vector3(
-            x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
-            0.5f,
-            y * (boardGenerator.tileSize + boardGenerator.tileSpacingZ)
-        );
-
-        return Physics.OverlapSphere(position, 0.1f)
-            .Select(collider => collider.GetComponent<Troop>())
-            .FirstOrDefault(t => t != null);
+        Troop enemyTroop = GetTroopAtPosition(x, y);
+        return enemyTroop != null && IsEnemy(troop, enemyTroop);
     }
 
-    bool IsEnemy(Troop troop, Troop other)
-    {
-        return troop.CompareTag("Player1Troop") != other.CompareTag("Player1Troop");
-    }
 }
