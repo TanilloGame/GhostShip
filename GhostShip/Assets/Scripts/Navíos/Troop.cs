@@ -166,16 +166,30 @@ public class Troop : MonoBehaviour
 
     private void ApplyWaveMotion()
     {
-        int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
-        int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
+        // Verifica si boardGenerator está disponible y sus propiedades están inicializadas
+        if (boardGenerator != null)
+        {
+            // Asegúrate de que las propiedades están asignadas (si es necesario, asigna valores por defecto)
+            float waveFrequency = boardGenerator.waveFrequency != 0 ? boardGenerator.waveFrequency : 1.0f;
+            float waveSpeed = boardGenerator.waveSpeed != 0 ? boardGenerator.waveSpeed : 1.0f;
+            float waveHeight = boardGenerator.waveHeight != 0 ? boardGenerator.waveHeight : 1.0f;
 
-        // Calcula el desplazamiento de la onda
-        float waveOffset = Mathf.Sin((x + y) * boardGenerator.waveFrequency + Time.time * boardGenerator.waveSpeed);
+            int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
+            int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-        // Aplica el desplazamiento en el eje Y
-        Vector3 newPosition = transform.position;
-        newPosition.y = waveOffset * boardGenerator.waveHeight + 0.5f; // Ajusta la altura para que la tropa esté ligeramente por encima de la casilla
-        transform.position = newPosition;
+            // Calcula el desplazamiento de la onda
+            float waveOffset = Mathf.Sin((x + y) * waveFrequency + Time.time * waveSpeed);
+
+            // Aplica el desplazamiento en el eje Y
+            Vector3 newPosition = transform.position;
+            newPosition.y = waveOffset * waveHeight + 0.5f; // Ajusta la altura para que la tropa esté ligeramente por encima de la casilla
+            transform.position = newPosition;
+        }
+        else
+        {
+            // Si boardGenerator no está disponible, simplemente no aplica el movimiento de onda
+            Debug.LogWarning("BoardGenerator no encontrado. El movimiento de onda no se aplicará.");
+        }
     }
 
     private IEnumerator HighlightTile(GameObject tile)

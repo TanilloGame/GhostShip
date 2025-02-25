@@ -147,7 +147,7 @@ MonoBehaviour:
   troopType: 0
   health: 100
   damage: 100
-  speed: 2
+  speed: 1
   attackValue: 1
   cannonSmokePrefab: {fileID: 1787239758588755639, guid: 5e20a7460dd3380449506a90d1205573,
     type: 3}
