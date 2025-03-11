@@ -22,15 +22,22 @@ public class Troop : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"{gameObject.name} inicializada.");
         boardGenerator = FindObjectOfType<BoardGenerator>();
         if (boardGenerator != null)
         {
+            Debug.Log($"{gameObject.name} registrada en el BoardGenerator.");
             boardGenerator.RegisterTroop(this);
+        }
+        else
+        {
+            Debug.LogError("BoardGenerator no encontrado.");
         }
     }
 
     void OnDestroy()
     {
+        Debug.Log($"{gameObject.name} destruida.");
         if (boardGenerator != null)
         {
             boardGenerator.UnregisterTroop(this);
@@ -40,6 +47,7 @@ public class Troop : MonoBehaviour
     // Mueve la tropa hacia adelante y al finalizar el movimiento, chequea el ataque
     public void MoveAndAttack()
     {
+        Debug.Log($"{gameObject.name} iniciando movimiento y ataque.");
         int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
         int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
@@ -47,11 +55,13 @@ public class Troop : MonoBehaviour
         int moveDirection = gameObject.CompareTag("Player1Troop") ? 1 : -1;
         int targetX = x + moveDirection;
 
+        Debug.Log($"{gameObject.name} moviéndose a ({targetX}, {y}).");
         MoveTo(targetX, y);
     }
 
     void MoveTo(int x, int y)
     {
+        Debug.Log($"{gameObject.name} preparándose para moverse a ({x}, {y}).");
         targetPosition = new Vector3(
             x * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
             transform.position.y,
@@ -71,37 +81,49 @@ public class Troop : MonoBehaviour
 
             if (t >= 1f)
             {
+                Debug.Log($"{gameObject.name} ha terminado de moverse.");
                 isMoving = false;
-                CheckForAttack(); // Comprobar ataque después de moverse
+                CheckForSideAttacks(); // Comprobar ataque después de moverse
             }
         }
     }
 
     // Comprueba si hay tropas enemigas a la izquierda o derecha
-    private void CheckForAttack()
+    private void CheckForSideAttacks()
     {
+        Debug.Log($"{gameObject.name} verificando ataques laterales.");
         int x = Mathf.RoundToInt(transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
         int y = Mathf.RoundToInt(transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-        // Recorre las casillas a la izquierda y derecha
-        for (int dx = -attackRange; dx <= attackRange; dx += (attackRange * 2)) // Solo izquierda y derecha
+        // Verificar a la izquierda
+        Debug.Log($"{gameObject.name} verificando ataque a la izquierda en ({x - 1}, {y}).");
+        if (CanAttackEnemy(x - 1, y))
         {
-            int targetX = x + dx;
+            Debug.Log($"{gameObject.name} atacando a la izquierda.");
+            AttackEnemy(x - 1, y);
+            HighlightTile(x - 1, y);
+        }
 
-            if (CanAttackEnemy(targetX, y))
-            {
-                AttackEnemy(targetX, y);
-                HighlightTile(targetX, y); // Resaltar la casilla atacada
-                return;
-            }
+        // Verificar a la derecha
+        Debug.Log($"{gameObject.name} verificando ataque a la derecha en ({x + 1}, {y}).");
+        if (CanAttackEnemy(x + 1, y))
+        {
+            Debug.Log($"{gameObject.name} atacando a la derecha.");
+            AttackEnemy(x + 1, y);
+            HighlightTile(x + 1, y);
         }
     }
 
     // Verifica si hay un enemigo en la casilla especificada
     private bool CanAttackEnemy(int x, int y)
     {
+        Debug.Log($"{gameObject.name} verificando si puede atacar en ({x}, {y}).");
         GameObject tile = boardGenerator.GetTile(x, y);
-        if (tile == null) return false;
+        if (tile == null)
+        {
+            Debug.Log($"{gameObject.name} no puede atacar en ({x}, {y}) porque no hay casilla.");
+            return false;
+        }
 
         Collider[] colliders = Physics.OverlapSphere(tile.transform.position, 0.5f); // Aumentar el radio
         foreach (Collider collider in colliders)
@@ -109,22 +131,27 @@ public class Troop : MonoBehaviour
             Troop foundTroop = collider.GetComponent<Troop>();
             if (foundTroop != null && IsEnemy(foundTroop) && foundTroop.transform.position.z == transform.position.z) // Verificar si está en la misma fila
             {
+                Debug.Log($"{gameObject.name} encontró un enemigo en ({x}, {y}).");
                 return true; // Hay un enemigo al que atacar
             }
         }
+        Debug.Log($"{gameObject.name} no encontró enemigos en ({x}, {y}).");
         return false;
     }
 
     // Compara si las tropas son enemigas según sus etiquetas
     private bool IsEnemy(Troop other)
     {
-        return (gameObject.CompareTag("Player1Troop") && other.CompareTag("Player2Troop")) ||
-               (gameObject.CompareTag("Player2Troop") && other.CompareTag("Player1Troop"));
+        bool isEnemy = (gameObject.CompareTag("Player1Troop") && other.CompareTag("Player2Troop")) ||
+                       (gameObject.CompareTag("Player2Troop") && other.CompareTag("Player1Troop"));
+        Debug.Log($"{gameObject.name} verificando si {other.gameObject.name} es enemigo: {isEnemy}.");
+        return isEnemy;
     }
 
     // Realiza el ataque al enemigo y muestra efectos visuales
     private void AttackEnemy(int targetX, int targetY)
     {
+        Debug.Log($"{gameObject.name} atacando en ({targetX}, {targetY}).");
         // Instanciar el sistema de partículas de ataque
         Vector3 effectPosition = new Vector3(targetX * (boardGenerator.tileSize + boardGenerator.tileSpacingX),
                                              transform.position.y + 0.5f, // Ajusta la altura
@@ -142,6 +169,7 @@ public class Troop : MonoBehaviour
                 Troop foundTroop = collider.GetComponent<Troop>();
                 if (foundTroop != null && IsEnemy(foundTroop))
                 {
+                    Debug.Log($"{gameObject.name} aplicando {damage} de daño a {foundTroop.gameObject.name}.");
                     foundTroop.TakeDamage(damage);
                 }
             }
@@ -150,8 +178,9 @@ public class Troop : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        Debug.Log($"{gameObject.name} recibiendo {damage} de daño. Salud actual: {health}.");
         health -= damage;
-        Debug.Log($"{gameObject.name} ha recibido {damage} de daño. Salud restante: {health}");
+        Debug.Log($"{gameObject.name} salud restante: {health}.");
         if (health <= 0)
         {
             Die();
@@ -167,6 +196,7 @@ public class Troop : MonoBehaviour
     // Resalta la casilla con un color rojo durante un breve tiempo
     private void HighlightTile(int x, int y)
     {
+        Debug.Log($"{gameObject.name} resaltando casilla ({x}, {y}).");
         GameObject tile = boardGenerator.GetTile(x, y);
         if (tile != null)
         {
@@ -184,6 +214,7 @@ public class Troop : MonoBehaviour
     private IEnumerator RestoreTileColor(Renderer tileRenderer, Color originalColor)
     {
         yield return new WaitForSeconds(highlightDuration);
+        Debug.Log($"{gameObject.name} restaurando color de la casilla.");
         tileRenderer.material.color = originalColor; // Restauramos el color original
     }
 

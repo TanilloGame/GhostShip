@@ -76,18 +76,67 @@ public class TileSelector : MonoBehaviour
         int x = Mathf.RoundToInt(tile.transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
         int y = Mathf.RoundToInt(tile.transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
 
-        if ((turnManager.currentPlayer == TurnManager.Player.Player1 && y == 0) ||
-            (turnManager.currentPlayer == TurnManager.Player.Player2 && y == boardGenerator.height - 1))
+        string validationMessage;
+        if (IsCellValidForPlacement(x, y, turnManager.currentPlayer, out validationMessage))
         {
-            if (!IsTileOccupied(x, y))
+            PlaceTroop(x, y);
+        }
+        else
+        {
+            Debug.Log($"Casilla no válida para colocar una tropa. Razón: {validationMessage}");
+            Vector2Int alternativeCell = FindAlternativeCell(turnManager.currentPlayer);
+            if (alternativeCell.x != -1 && alternativeCell.y != -1)
             {
-                PlaceTroop(x, y);
+                Debug.Log($"Colocando tropa en casilla alternativa: ({alternativeCell.x}, {alternativeCell.y})");
+                PlaceTroop(alternativeCell.x, alternativeCell.y);
             }
             else
             {
-                Debug.Log("Casilla ocupada. No se puede colocar una tropa aquí.");
+                Debug.Log("No hay casillas válidas disponibles para colocar una tropa.");
             }
         }
+    }
+
+    private bool IsCellValidForPlacement(int x, int y, TurnManager.Player player, out string validationMessage)
+    {
+        // Verificar si la casilla está en la primera fila del jugador
+        if (player == TurnManager.Player.Player1 && y != 0)
+        {
+            validationMessage = "El Jugador 1 solo puede colocar tropas en la primera fila (fila 0).";
+            return false;
+        }
+        else if (player == TurnManager.Player.Player2 && y != boardGenerator.height - 1)
+        {
+            validationMessage = "El Jugador 2 solo puede colocar tropas en la última fila.";
+            return false;
+        }
+
+        // Verificar si la casilla está vacía
+        if (IsTileOccupied(x, y))
+        {
+            validationMessage = "La casilla ya está ocupada por otra tropa.";
+            return false;
+        }
+
+        // Si pasa todas las validaciones, la casilla es válida
+        validationMessage = "Casilla válida.";
+        return true;
+    }
+
+    private Vector2Int FindAlternativeCell(TurnManager.Player player)
+    {
+        // Buscar una casilla válida en la primera fila del jugador
+        int row = (player == TurnManager.Player.Player1) ? 0 : boardGenerator.height - 1;
+
+        for (int y = 0; y < boardGenerator.width; y++)
+        {
+            if (!IsTileOccupied(row, y))
+            {
+                return new Vector2Int(row, y);
+            }
+        }
+
+        return new Vector2Int(-1, -1); // No se encontró una casilla válida
     }
 
     void PlaceTroop(int x, int y)
@@ -200,6 +249,7 @@ public class TileSelector : MonoBehaviour
                                     troop.transform.DOMove(newPosition, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
                                     {
                                         AttackEnemyTroop(troop, enemyTroop);
+                                        CheckForVictory(troop);
                                     });
                                     y = newY;
                                 }
@@ -228,6 +278,7 @@ public class TileSelector : MonoBehaviour
                             troop.transform.DOMove(newPosition, 0.5f).SetEase(Ease.OutQuad).OnComplete(() =>
                             {
                                 AttackEnemyTroop(troop, null);
+                                CheckForVictory(troop);
                             });
                             y = newY;
                         }
@@ -235,6 +286,30 @@ public class TileSelector : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void CheckForVictory(Troop troop)
+    {
+        int y = Mathf.RoundToInt(troop.transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
+
+        if (troop.CompareTag("Player1Troop") && y == boardGenerator.height - 1)
+        {
+            Debug.Log("¡Jugador 1 ha ganado!");
+            EndGame(TurnManager.Player.Player1);
+        }
+        else if (troop.CompareTag("Player2Troop") && y == 0)
+        {
+            Debug.Log("¡Jugador 2 ha ganado!");
+            EndGame(TurnManager.Player.Player2);
+        }
+    }
+
+    private void EndGame(TurnManager.Player winner)
+    {
+        // Aquí puedes agregar lógica para finalizar el juego, como mostrar un mensaje de victoria, reiniciar el juego, etc.
+        Debug.Log($"El juego ha terminado. Ganador: {winner}");
+        // Por ejemplo, puedes deshabilitar el script para evitar más interacciones.
+        enabled = false;
     }
 
     private Troop GetTroopAtPosition(int x, int y)
@@ -293,5 +368,4 @@ public class TileSelector : MonoBehaviour
         Troop enemyTroop = GetTroopAtPosition(x, y);
         return enemyTroop != null && IsEnemy(troop, enemyTroop);
     }
-
 }

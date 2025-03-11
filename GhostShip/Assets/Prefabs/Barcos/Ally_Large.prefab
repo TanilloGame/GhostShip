@@ -227,7 +227,7 @@ MonoBehaviour:
   troopType: 2
   health: 0
   speed: 1
-  damage: 0
+  damage: 100
   attackRange: 1
   attackEffectPrefab: {fileID: 0}
-  highlightDuration: 0.5
+  highlightDuration: 2

@@ -15,6 +15,8 @@ public class BoardController : MonoBehaviour
     [SerializeField] private BoardState board;
     public int separacion;
 
+    private int turnsPlayedInCurrentRound = 0; // Contador de turnos jugados en la ronda actual
+
     private void Awake()
     {
         if (instance == null)
@@ -33,12 +35,90 @@ public class BoardController : MonoBehaviour
         int currentPlayer = instance.board.playerTurn;
         TroopType selectedTroop = instance.board.nextTroop;
 
-        instance.board.rows[x].cells[y].troop = selectedTroop;
-        instance.board.rows[x].cells[y].player = currentPlayer;
+        string validationMessage;
+        if (instance.IsCellValidForPlacement(x, y, currentPlayer, out validationMessage))
+        {
+            // Colocar la tropa en la casilla seleccionada
+            instance.board.rows[x].cells[y].troop = selectedTroop;
+            instance.board.rows[x].cells[y].player = currentPlayer;
 
-        instance.MoveOpponentTroops(currentPlayer);
+            // Mover las tropas enemigas
+            instance.MoveOpponentTroops(currentPlayer);
 
-        instance.RegenerateBoard();
+            // Regenerar el tablero
+            instance.RegenerateBoard();
+
+            // Verificar si hay un ganador después de cada movimiento
+            instance.CheckForWinner();
+
+            // Cambiar al siguiente jugador y actualizar el contador de turnos
+            instance.ChangePlayerTurn();
+        }
+        else
+        {
+            // Mostrar un mensaje de error si la casilla no es válida
+            Debug.Log($"Casilla no válida para colocar una tropa. Razón: {validationMessage}");
+        }
+    }
+
+    // Cambiar turno y actualizar la tropa para el siguiente jugador
+    private void ChangePlayerTurn()
+    {
+        // Incrementar el contador de turnos jugados en la ronda actual
+        turnsPlayedInCurrentRound++;
+
+        // Si ambos jugadores han jugado su turno en la ronda actual, cambiar el tipo de tropa
+        if (turnsPlayedInCurrentRound >= 2)
+        {
+            UpdateNextTroop();
+            turnsPlayedInCurrentRound = 0; // Reiniciar el contador de turnos
+        }
+
+        // Cambiar el turno entre los jugadores (1 y 2)
+        board.playerTurn = (board.playerTurn == 1) ? 2 : 1;
+    }
+
+    // Actualizar el tipo de tropa para la siguiente ronda
+    private void UpdateNextTroop()
+    {
+        switch (board.nextTroop)
+        {
+            case TroopType.Small:
+                board.nextTroop = TroopType.Medium;
+                break;
+            case TroopType.Medium:
+                board.nextTroop = TroopType.Large;
+                break;
+            case TroopType.Large:
+                board.nextTroop = TroopType.Small;
+                break;
+        }
+    }
+
+    private bool IsCellValidForPlacement(int x, int y, int player, out string validationMessage)
+    {
+        // Verificar si la casilla está en la primera fila del jugador
+        if (player == 1 && x != 0)
+        {
+            validationMessage = "El Jugador 1 solo puede colocar tropas en la primera fila (fila 0).";
+            return false;
+        }
+        else if (player == 2 && x != board.rows.Count - 1)
+        {
+            validationMessage = "El Jugador 2 solo puede colocar tropas en la última fila.";
+            return false;
+        }
+
+        // Verificar si la casilla está vacía
+        if (board.rows[x].cells[y].troop != TroopType.None)
+        {
+            validationMessage = "La casilla ya está ocupada por otra tropa.";
+            return false;
+        }
+
+        // Si pasa todas las validaciones, la casilla es válida
+        validationMessage = "Casilla válida.";
+        return true;
     }
 
     private void MoveOpponentTroops(int currentPlayer)
@@ -58,13 +138,31 @@ public class BoardController : MonoBehaviour
                     int newX = i + direction;
                     if (newX >= 0 && newX < rows.Count)
                     {
-                        // Verificamos si la nueva celda está vacía antes de mover la tropa
-                        if (rows[newX].cells[j].troop == TroopType.None)
+                        BoardCell targetCell = rows[newX].cells[j];
+
+                        // Verificar si hay una tropa enemiga en la celda de destino
+                        if (targetCell.troop != TroopType.None && targetCell.player != cell.player)
                         {
-                            // Mover la tropa a la nueva posición
-                            rows[newX].cells[j] = new BoardCell { troop = cell.troop, player = cell.player };
-                            rows[i].cells[j] = new BoardCell { troop = TroopType.None, player = 0 };
+                            // Comparar el tipo de tropa
+                            if (cell.troop > targetCell.troop)
+                            {
+                                // La tropa actual es más fuerte, eliminar la tropa enemiga
+                                board.RemoveTroop(newX, j);
+                            }
+                            else if (cell.troop == targetCell.troop)
+                            {
+                                // Las tropas son del mismo tipo, no se mueve
+                                continue;
+                            }
+                            else
+                            {
+                                // La tropa enemiga es más fuerte, no se mueve
+                                continue;
+                            }
                         }
+
+                        // Mover la tropa a la nueva posición
+                        board.MoveTroop(i, j, newX, j);
                     }
                 }
             }
@@ -118,5 +216,26 @@ public class BoardController : MonoBehaviour
     public void RegenerateBoard()
     {
         BoardRepresentation(board);
+    }
+
+    // Método para verificar si hay un ganador
+    private void CheckForWinner()
+    {
+        board.CheckForWinner(); // Llama al método CheckForWinner de BoardState
+
+        if (board.winner != 0)
+        {
+            Debug.Log($"¡Jugador {board.winner} ha ganado!");
+            EndGame(board.winner);
+        }
+    }
+
+    // Método para finalizar el juego
+    private void EndGame(int winner)
+    {
+        // Aquí puedes agregar lógica para finalizar el juego, como mostrar un mensaje de victoria o deshabilitar interacciones.
+        Debug.Log($"El juego ha terminado. Ganador: Jugador {winner}");
+        // Por ejemplo, puedes deshabilitar el script para evitar más interacciones.
+        enabled = false;
     }
 }

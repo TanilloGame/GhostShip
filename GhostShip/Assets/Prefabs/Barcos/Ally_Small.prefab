@@ -81,7 +81,7 @@ PrefabInstance:
     - target: {fileID: -3306813550804760141, guid: ae0b21f87683dae4593110d616f918b2,
         type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: ae0b21f87683dae4593110d616f918b2,
         type: 3}
@@ -91,7 +91,7 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: ae0b21f87683dae4593110d616f918b2,
         type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: ae0b21f87683dae4593110d616f918b2,
         type: 3}
@@ -101,17 +101,17 @@ PrefabInstance:
     - target: {fileID: 3588834308678477261, guid: ae0b21f87683dae4593110d616f918b2,
         type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6516731474951633051, guid: ae0b21f87683dae4593110d616f918b2,
         type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 9187308223039480452, guid: ae0b21f87683dae4593110d616f918b2,
         type: 3}
       propertyPath: m_Layer
-      value: 0
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -166,10 +166,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   troopType: 0
-  health: 100
+  health: 1
   speed: 1
   damage: 100
-  attackRange: 3
+  attackRange: 2
   attackEffectPrefab: {fileID: 1787239758588755639, guid: 5e20a7460dd3380449506a90d1205573,
     type: 3}
   highlightDuration: 2
