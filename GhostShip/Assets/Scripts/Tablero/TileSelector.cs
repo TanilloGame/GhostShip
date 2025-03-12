@@ -345,27 +345,7 @@ public class TileSelector : MonoBehaviour
         }
         else
         {
-            CheckForSideAttacks(attacker);
+            attacker.CheckForSideAttacks();
         }
-    }
-
-    private void CheckForSideAttacks(Troop troop)
-    {
-        int x = Mathf.RoundToInt(troop.transform.position.x / (boardGenerator.tileSize + boardGenerator.tileSpacingX));
-        int y = Mathf.RoundToInt(troop.transform.position.z / (boardGenerator.tileSize + boardGenerator.tileSpacingZ));
-
-        bool canAttackLeft = CheckForEnemyAtPosition(x - 1, y, troop);
-        bool canAttackRight = CheckForEnemyAtPosition(x + 1, y, troop);
-
-        if (canAttackLeft || canAttackRight)
-        {
-            Debug.Log($"Tropa detectada a la izquierda o derecha en la posición ({x - 1}, {y}) o ({x + 1}, {y})");
-        }
-    }
-
-    private bool CheckForEnemyAtPosition(int x, int y, Troop troop)
-    {
-        Troop enemyTroop = GetTroopAtPosition(x, y);
-        return enemyTroop != null && IsEnemy(troop, enemyTroop);
     }
 }

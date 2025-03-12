@@ -32,6 +32,12 @@ public class BoardController : MonoBehaviour
 
     public static void CellSelected(int x, int y)
     {
+        if (instance == null || instance.board == null)
+        {
+            Debug.LogError("BoardController o BoardState no encontrado.");
+            return;
+        }
+
         int currentPlayer = instance.board.playerTurn;
         TroopType selectedTroop = instance.board.nextTroop;
 
@@ -75,9 +81,15 @@ public class BoardController : MonoBehaviour
         }
 
         // Cambiar el turno entre los jugadores (1 y 2)
-        board.playerTurn = (board.playerTurn == 1) ? 2 : 1;
-    }
+        board.NextTurn();
 
+        // Mostrar un mensaje en el debug cuando le toca a la IA (Jugador 2)
+        if (board.playerTurn == 2)
+        {
+            Debug.Log("Es el turno de la IA (Jugador 2).");
+            AIController.instance.HandleAITurn();
+        }
+    }
     // Actualizar el tipo de tropa para la siguiente ronda
     private void UpdateNextTroop()
     {
@@ -168,7 +180,6 @@ public class BoardController : MonoBehaviour
             }
         }
     }
-
     private void BoardRepresentation(BoardState boardToRepresent)
     {
         foreach (Transform child in transform)
@@ -219,7 +230,7 @@ public class BoardController : MonoBehaviour
     }
 
     // Método para verificar si hay un ganador
-    private void CheckForWinner()
+    public void CheckForWinner()
     {
         board.CheckForWinner(); // Llama al método CheckForWinner de BoardState
 
@@ -237,5 +248,11 @@ public class BoardController : MonoBehaviour
         Debug.Log($"El juego ha terminado. Ganador: Jugador {winner}");
         // Por ejemplo, puedes deshabilitar el script para evitar más interacciones.
         enabled = false;
+    }
+
+    // Método para obtener el estado del tablero
+    public BoardState GetBoardState()
+    {
+        return board;
     }
 }
