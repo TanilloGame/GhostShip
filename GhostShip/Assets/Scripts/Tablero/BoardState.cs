@@ -137,6 +137,7 @@ public class BoardState
     // Método para actualizar el tipo de tropa para la siguiente ronda
     private void UpdateNextTroop()
     {
+        
         switch (nextTroop)
         {
             case TroopType.Small:
