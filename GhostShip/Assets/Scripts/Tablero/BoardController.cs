@@ -68,7 +68,7 @@ public class BoardController : MonoBehaviour
     }
 
     // Cambiar turno y actualizar la tropa para el siguiente jugador
-    public void ChangePlayerTurn()
+    private void ChangePlayerTurn()
     {
         // Incrementar el contador de turnos jugados en la ronda actual
         turnsPlayedInCurrentRound++;
@@ -76,7 +76,7 @@ public class BoardController : MonoBehaviour
         // Si ambos jugadores han jugado su turno en la ronda actual, cambiar el tipo de tropa
         if (turnsPlayedInCurrentRound >= 2)
         {
-            UpdateNextTroop();
+            
             turnsPlayedInCurrentRound = 0; // Reiniciar el contador de turnos
         }
 
@@ -87,25 +87,11 @@ public class BoardController : MonoBehaviour
         if (board.playerTurn == 2)
         {
             Debug.Log("Es el turno de la IA (Jugador 2).");
-            AIController.instance.MakeMove(); // Llamar al método MakeMove de la IA
+            
         }
     }
-    // Actualizar el tipo de tropa para la siguiente ronda
-    private void UpdateNextTroop()
-    {
-        switch (board.nextTroop)
-        {
-            case TroopType.Small:
-                board.nextTroop = TroopType.Medium;
-                break;
-            case TroopType.Medium:
-                board.nextTroop = TroopType.Large;
-                break;
-            case TroopType.Large:
-                board.nextTroop = TroopType.Small;
-                break;
-        }
-    }
+   
+    
 
     private bool IsCellValidForPlacement(int x, int y, int player, out string validationMessage)
     {
