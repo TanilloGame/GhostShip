@@ -9,12 +9,38 @@ public class BoardCell
 {
     public TroopType troop;
     public int player; // 0 si no hay jugador, 1 para Jugador 1, 2 para Jugador 2
+
+    // Método para clonar una celda
+    public BoardCell Clone()
+    {
+        return new BoardCell
+        {
+            troop = this.troop,
+            player = this.player
+        };
+    }
 }
 
 [System.Serializable]
 public class BoardRow
 {
     public List<BoardCell> cells;
+
+    // Método para clonar una fila
+    public BoardRow Clone()
+    {
+        BoardRow clone = new BoardRow
+        {
+            cells = new List<BoardCell>()
+        };
+
+        foreach (var cell in this.cells)
+        {
+            clone.cells.Add(cell.Clone());
+        }
+
+        return clone;
+    }
 }
 
 [System.Serializable]
@@ -48,6 +74,26 @@ public class BoardState
         playerTurn = 1; // El Jugador 1 comienza
         nextTroop = TroopType.Small; // La primera tropa a colocar
         winner = 0; // Inicialmente no hay ganador
+    }
+
+    // Método para clonar el estado del tablero
+    public BoardState Clone()
+    {
+        BoardState clone = new BoardState(0, 0) // Se inicializa con 0, 0 porque se sobrescribirá
+        {
+            playerTurn = this.playerTurn,
+            nextTroop = this.nextTroop,
+            winner = this.winner,
+            turnsPlayedInCurrentRound = this.turnsPlayedInCurrentRound,
+            rows = new List<BoardRow>()
+        };
+
+        foreach (var row in this.rows)
+        {
+            clone.rows.Add(row.Clone());
+        }
+
+        return clone;
     }
 
     // Método para verificar si hay un ganador

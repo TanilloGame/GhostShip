@@ -68,7 +68,7 @@ public class BoardController : MonoBehaviour
     }
 
     // Cambiar turno y actualizar la tropa para el siguiente jugador
-    private void ChangePlayerTurn()
+    public void ChangePlayerTurn()
     {
         // Incrementar el contador de turnos jugados en la ronda actual
         turnsPlayedInCurrentRound++;
@@ -87,7 +87,7 @@ public class BoardController : MonoBehaviour
         if (board.playerTurn == 2)
         {
             Debug.Log("Es el turno de la IA (Jugador 2).");
-            AIController.instance.HandleAITurn();
+            AIController.instance.MakeMove(); // Llamar al método MakeMove de la IA
         }
     }
     // Actualizar el tipo de tropa para la siguiente ronda
