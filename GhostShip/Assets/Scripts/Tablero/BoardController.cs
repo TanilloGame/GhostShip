@@ -68,7 +68,7 @@ public class BoardController : MonoBehaviour
     }
 
     // Cambiar turno y actualizar la tropa para el siguiente jugador
-    private void ChangePlayerTurn()
+    public void ChangePlayerTurn()
     {
         // Incrementar el contador de turnos jugados en la ronda actual
         turnsPlayedInCurrentRound++;
