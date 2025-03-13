@@ -18,7 +18,7 @@ public class AIController : MonoBehaviour
         board = BoardController.instance.GetBoardState();
 
         // Llamar al algoritmo Minimax con poda Alfa-Beta (aumentamos la profundidad a 6)
-        Minimax(board, 6, int.MinValue, int.MaxValue, true);
+        Minimax(board, 15, int.MinValue, int.MaxValue, true);
 
         // Colocar la tropa de la IA en el tablero
         PlaceAITroop();
