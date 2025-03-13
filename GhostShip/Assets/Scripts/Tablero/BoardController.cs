@@ -26,6 +26,22 @@ public class BoardController : MonoBehaviour
     void Start()
     {
         BoardRepresentation(board);
+
+        // Iniciar el primer turno de la IA
+        if (board.playerTurn == 2)
+        {
+            Debug.Log("Es el turno de la IA (Jugador 2).");
+            
+            // Buscar una casilla válida para colocar la tropa
+            AIController aiController = FindObjectOfType<AIController>();
+            if (aiController != null)
+            {
+                aiController.MakeMove();
+            }
+
+            // Mover las tropas del jugador 1 después de que la IA coloque su tropa
+            MoveOpponentTroops(1); // Mover tropas del jugador 1 (enemigo de la IA)
+        }
     }
 
     public static void CellSelected(int x, int y)
@@ -47,7 +63,7 @@ public class BoardController : MonoBehaviour
             instance.board.rows[x].cells[y].player = currentPlayer;
 
             // Mover las tropas enemigas
-            instance.MoveOpponentTroops(currentPlayer);
+            instance.MoveOpponentTroops(2);
 
             // Regenerar el tablero
             instance.RegenerateBoard();
@@ -82,6 +98,9 @@ public class BoardController : MonoBehaviour
             {
                 aiController.MakeMove();
             }
+
+            // Mover las tropas del jugador 1 después de que la IA coloque su tropa
+            MoveOpponentTroops(1); // Mover tropas del jugador 1 (enemigo de la IA)
         }
         else
         {
@@ -133,6 +152,7 @@ public class BoardController : MonoBehaviour
 
     private void MoveOpponentTroops(int currentPlayer)
     {
+        Debug.Log($"Moviendo tropas del Jugador {currentPlayer}...");
         List<BoardRow> rows = board.rows;
         int direction = (currentPlayer == 1) ? -1 : 1;
 
@@ -173,8 +193,11 @@ public class BoardController : MonoBehaviour
                             }
                         }
 
-                        // Mover la tropa a la nueva posición
-                        board.MoveTroop(i, j, newX, j);
+                        // Mover la tropa a la nueva posición solo si la celda de destino está vacía
+                        if (targetCell.troop == TroopType.None)
+                        {
+                            board.MoveTroop(i, j, newX, j);
+                        }
                     }
                 }
             }
@@ -203,19 +226,38 @@ public class BoardController : MonoBehaviour
         BoardCell cell = board.rows[x].cells[y];
         GameObject cellUnit = null;
 
+        // Determinar la rotación basada en el jugador
+        Quaternion rotation = Quaternion.identity; // Rotación por defecto (0 grados)
+        if (cell.player == 2) // Jugador 2 (IA)
+        {
+            rotation = Quaternion.Euler(0, 180, 0); // Rotar 180 grados en el eje Y
+        }
+
         switch (cell.troop)
         {
             case TroopType.Small:
-                cellUnit = Instantiate(cell.player == 1 ? smallTroopP1Prefab : smallTroopP2Prefab, new Vector3(separacion * y, 0, separacion * x), Quaternion.identity, transform);
+                cellUnit = Instantiate(cell.player == 1 ? smallTroopP1Prefab : smallTroopP2Prefab,
+                                      new Vector3(separacion * y, 0, separacion * x),
+                                      rotation,
+                                      transform);
                 break;
             case TroopType.Medium:
-                cellUnit = Instantiate(cell.player == 1 ? mediumTroopP1Prefab : mediumTroopP2Prefab, new Vector3(separacion * y, 0, separacion * x), Quaternion.identity, transform);
+                cellUnit = Instantiate(cell.player == 1 ? mediumTroopP1Prefab : mediumTroopP2Prefab,
+                                      new Vector3(separacion * y, 0, separacion * x),
+                                      rotation,
+                                      transform);
                 break;
             case TroopType.Large:
-                cellUnit = Instantiate(cell.player == 1 ? largeTroopP1Prefab : largeTroopP2Prefab, new Vector3(separacion * y, 0, separacion * x), Quaternion.identity, transform);
+                cellUnit = Instantiate(cell.player == 1 ? largeTroopP1Prefab : largeTroopP2Prefab,
+                                      new Vector3(separacion * y, 0, separacion * x),
+                                      rotation,
+                                      transform);
                 break;
             case TroopType.None:
-                cellUnit = Instantiate(emptyPrefab, new Vector3(separacion * y, 0, separacion * x), Quaternion.identity, transform);
+                cellUnit = Instantiate(emptyPrefab,
+                                      new Vector3(separacion * y, 0, separacion * x),
+                                      Quaternion.identity,
+                                      transform);
                 break;
         }
 
