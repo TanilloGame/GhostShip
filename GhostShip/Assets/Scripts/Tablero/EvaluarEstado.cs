@@ -11,7 +11,7 @@
 //        foreach (var tropa in tablero.ObtenerTropas())
 //        {
 //            float peso = ObtenerPesoTropa(tropa.tipo);
-//            float distanciaFactor = 1f / (1f + tropa.DistanciaALineaVictoria()); 
+//            float distanciaFactor = 1f / (1f + tropa.DistanciaALineaVictoria());
 
 //            float valorTropa = peso * distanciaFactor;
 
@@ -34,5 +34,4 @@
 //            default: return 1f;
 //        }
 //    }
-
 //}

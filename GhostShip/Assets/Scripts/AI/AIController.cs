@@ -20,15 +20,54 @@ public class AIController : MonoBehaviour
         // Llamar al algoritmo Minimax con poda Alfa-Beta
         Minimax(board, 3, int.MinValue, int.MaxValue, true);
 
+        // Colocar la tropa de la IA en el tablero
+        PlaceAITroop();
+
         // Regenerar el tablero después de que la IA haya hecho su movimiento
         BoardController.instance.RegenerateBoard();
 
         // Verificar si hay un ganador después del movimiento de la IA
         BoardController.instance.CheckForWinner();
 
-        // Cambiar al siguiente jugador
+        // Cambiar al siguiente jugador (Jugador 1)
         BoardController.instance.ChangePlayerTurn();
     }
+
+    private void PlaceAITroop()
+    {
+        int lastRow = board.rows.Count - 1;
+        List<int> validCells = new List<int>();
+
+        // Buscar todas las celdas vacías en la última fila
+        for (int y = 0; y < board.rows[lastRow].cells.Count; y++)
+        {
+            if (board.rows[lastRow].cells[y].troop == TroopType.None)
+            {
+                validCells.Add(y);
+            }
+        }
+
+        if (validCells.Count > 0)
+        {
+            // Seleccionar una celda aleatoria
+            int selectedCell = validCells[Random.Range(0, validCells.Count)];
+
+            // Colocar la tropa en el tablero
+            board.rows[lastRow].cells[selectedCell].troop = board.nextTroop;
+            board.rows[lastRow].cells[selectedCell].player = aiPlayer;
+
+            // Instanciar la tropa correspondiente al tipo elegido por la IA
+            GameObject troopPrefab = BoardController.instance.GetTroopPrefab(board.nextTroop, aiPlayer);
+            Instantiate(troopPrefab, new Vector3(BoardController.instance.separacion * selectedCell, 0, BoardController.instance.separacion * lastRow), Quaternion.identity, BoardController.instance.transform);
+
+            Debug.Log($"La IA ha colocado una tropa {board.nextTroop} en ({lastRow}, {selectedCell})");
+        }
+        else
+        {
+            Debug.Log("La IA no encontró un lugar válido para colocar una tropa.");
+        }
+    }
+
 
     private int Minimax(BoardState board, int depth, int alpha, int beta, bool maximizingPlayer)
     {

@@ -15,8 +15,6 @@ public class BoardController : MonoBehaviour
     [SerializeField] private BoardState board;
     public int separacion;
 
-    private int turnsPlayedInCurrentRound = 0; // Contador de turnos jugados en la ronda actual
-
     private void Awake()
     {
         if (instance == null)
@@ -57,7 +55,7 @@ public class BoardController : MonoBehaviour
             // Verificar si hay un ganador después de cada movimiento
             instance.CheckForWinner();
 
-            // Cambiar al siguiente jugador y actualizar el contador de turnos
+            // Cambiar al siguiente jugador
             instance.ChangePlayerTurn();
         }
         else
@@ -70,28 +68,42 @@ public class BoardController : MonoBehaviour
     // Cambiar turno y actualizar la tropa para el siguiente jugador
     public void ChangePlayerTurn()
     {
-        // Incrementar el contador de turnos jugados en la ronda actual
-        turnsPlayedInCurrentRound++;
+        // Cambiar el turno al siguiente jugador
+        board.playerTurn = (board.playerTurn == 1) ? 2 : 1;
 
-        // Si ambos jugadores han jugado su turno en la ronda actual, cambiar el tipo de tropa
-        if (turnsPlayedInCurrentRound >= 2)
-        {
-            
-            turnsPlayedInCurrentRound = 0; // Reiniciar el contador de turnos
-        }
-
-        // Cambiar el turno entre los jugadores (1 y 2)
-        board.NextTurn();
-
-        // Mostrar un mensaje en el debug cuando le toca a la IA (Jugador 2)
+        // Si es el turno de la IA, hacer su movimiento automáticamente
         if (board.playerTurn == 2)
         {
             Debug.Log("Es el turno de la IA (Jugador 2).");
-            
+
+            // Buscar una casilla válida para colocar la tropa
+            AIController aiController = FindObjectOfType<AIController>();
+            if (aiController != null)
+            {
+                aiController.MakeMove();
+            }
+        }
+        else
+        {
+            // Actualizar el tipo de tropa para la siguiente ronda
+            board.UpdateNextTroop();
         }
     }
-   
-    
+
+    public GameObject GetTroopPrefab(TroopType troopType, int player)
+    {
+        switch (troopType)
+        {
+            case TroopType.Small:
+                return player == 1 ? smallTroopP1Prefab : smallTroopP2Prefab;
+            case TroopType.Medium:
+                return player == 1 ? mediumTroopP1Prefab : mediumTroopP2Prefab;
+            case TroopType.Large:
+                return player == 1 ? largeTroopP1Prefab : largeTroopP2Prefab;
+            default:
+                return emptyPrefab; // Devuelve un prefab vacío si no es válido
+        }
+    }
 
     private bool IsCellValidForPlacement(int x, int y, int player, out string validationMessage)
     {
@@ -131,7 +143,9 @@ public class BoardController : MonoBehaviour
             for (int j = 0; j < rows[i].cells.Count; j++)
             {
                 BoardCell cell = rows[i].cells[j];
-                if (cell.player != 0 && cell.player != currentPlayer) // Solo mover tropas enemigas
+
+                // Verificar si la celda tiene una tropa y pertenece al jugador enemigo
+                if (cell.player != 0 && cell.player != currentPlayer && cell.troop != TroopType.None)
                 {
                     int newX = i + direction;
                     if (newX >= 0 && newX < rows.Count)
@@ -166,6 +180,7 @@ public class BoardController : MonoBehaviour
             }
         }
     }
+
     private void BoardRepresentation(BoardState boardToRepresent)
     {
         foreach (Transform child in transform)

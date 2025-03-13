@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,6 +19,8 @@ public class BoardCell
         };
     }
 }
+
+
 
 [System.Serializable]
 public class BoardRow
@@ -54,8 +55,6 @@ public class BoardState
 
     public int winner; // 0 si no hay ganador, 1 para Jugador 1, 2 para Jugador 2
 
-    private int turnsPlayedInCurrentRound = 0; // Contador de turnos jugados en la ronda actual
-
     // Constructor para inicializar el tablero
     public BoardState(int width, int height)
     {
@@ -84,7 +83,6 @@ public class BoardState
             playerTurn = this.playerTurn,
             nextTroop = this.nextTroop,
             winner = this.winner,
-            turnsPlayedInCurrentRound = this.turnsPlayedInCurrentRound,
             rows = new List<BoardRow>()
         };
 
@@ -122,68 +120,9 @@ public class BoardState
         // Si no hay ganador, el campo winner sigue siendo 0
     }
 
-    // Método para verificar si una casilla es válida para colocar una tropa
-    public bool IsCellValidForPlacement(int x, int y, int player)
-    {
-        // Verificar si la casilla está en la primera fila del jugador y está vacía
-        if (player == 1 && x == 0 && rows[x].cells[y].troop == TroopType.None)
-        {
-            return true;
-        }
-        else if (player == 2 && x == rows.Count - 1 && rows[x].cells[y].troop == TroopType.None)
-        {
-            return true;
-        }
-        return false;
-    }
-
-    // Método para eliminar una tropa en una posición específica
-    public void RemoveTroop(int x, int y)
-    {
-        if (x >= 0 && x < rows.Count && y >= 0 && y < rows[x].cells.Count)
-        {
-            rows[x].cells[y].troop = TroopType.None;
-            rows[x].cells[y].player = 0;
-        }
-    }
-
-    // Método para mover una tropa de una posición a otra
-    public void MoveTroop(int fromX, int fromY, int toX, int toY)
-    {
-        if (fromX >= 0 && fromX < rows.Count && fromY >= 0 && fromY < rows[fromX].cells.Count &&
-            toX >= 0 && toX < rows.Count && toY >= 0 && toY < rows[toX].cells.Count)
-        {
-            // Copiar la tropa a la nueva posición
-            rows[toX].cells[toY].troop = rows[fromX].cells[fromY].troop;
-            rows[toX].cells[toY].player = rows[fromX].cells[fromY].player;
-
-            // Limpiar la posición anterior
-            rows[fromX].cells[fromY].troop = TroopType.None;
-            rows[fromX].cells[fromY].player = 0;
-        }
-    }
-
-    // Método para cambiar al siguiente turno y actualizar el tipo de tropa
-    public void NextTurn()
-    {
-        // Cambiar el turno entre los jugadores (1 y 2)
-        playerTurn = (playerTurn == 1) ? 2 : 1;
-
-        // Incrementar el contador de turnos jugados en la ronda actual
-        turnsPlayedInCurrentRound++;
-
-        // Si ambos jugadores han jugado su turno en la ronda actual, cambiar el tipo de tropa
-        if (turnsPlayedInCurrentRound >= 2)
-        {
-            UpdateNextTroop();
-            turnsPlayedInCurrentRound = 0; // Reiniciar el contador de turnos
-        }
-    }
-
     // Método para actualizar el tipo de tropa para la siguiente ronda
-    private void UpdateNextTroop()
+    public void UpdateNextTroop()
     {
-        
         switch (nextTroop)
         {
             case TroopType.Small:
@@ -197,4 +136,85 @@ public class BoardState
                 break;
         }
     }
+
+    public void RemoveTroop(int x, int y)
+    {
+        // Verificar que las coordenadas estén dentro de los límites del tablero
+        if (x >= 0 && x < rows.Count && y >= 0 && y < rows[x].cells.Count)
+        {
+            // Eliminar la tropa de la celda
+            rows[x].cells[y].troop = TroopType.None;
+            rows[x].cells[y].player = 0;
+
+            Debug.Log($"Tropa eliminada en ({x}, {y}).");
+        }
+        else
+        {
+            Debug.LogError($"Coordenadas fuera de los límites del tablero: ({x}, {y}).");
+        }
+    }
+    public void MoveTroop(int fromX, int fromY, int toX, int toY)
+    {
+        // Verificar que las coordenadas de origen y destino estén dentro de los límites del tablero
+        if (fromX >= 0 && fromX < rows.Count && fromY >= 0 && fromY < rows[fromX].cells.Count &&
+            toX >= 0 && toX < rows.Count && toY >= 0 && toY < rows[toX].cells.Count)
+        {
+            // Obtener la celda de origen y destino
+            BoardCell fromCell = rows[fromX].cells[fromY];
+            BoardCell toCell = rows[toX].cells[toY];
+
+            // Verificar si la celda de origen tiene una tropa
+            if (fromCell.troop != TroopType.None)
+            {
+                // Verificar si la celda de destino está vacía
+                if (toCell.troop == TroopType.None)
+                {
+                    // Mover la tropa a la celda de destino
+                    toCell.troop = fromCell.troop;
+                    toCell.player = fromCell.player;
+
+                    // Limpiar la celda de origen
+                    fromCell.troop = TroopType.None;
+                    fromCell.player = 0;
+
+                    Debug.Log($"Tropa movida de ({fromX}, {fromY}) a ({toX}, {toY}).");
+                }
+                else
+                {
+                    // Si hay una tropa enemiga en la celda de destino, comparar fuerzas
+                    if (fromCell.troop > toCell.troop)
+                    {
+                        // La tropa actual es más fuerte, eliminar la tropa enemiga
+                        toCell.troop = fromCell.troop;
+                        toCell.player = fromCell.player;
+
+                        // Limpiar la celda de origen
+                        fromCell.troop = TroopType.None;
+                        fromCell.player = 0;
+
+                        Debug.Log($"Tropa enemiga eliminada en ({toX}, {toY}). Tropa movida de ({fromX}, {fromY}).");
+                    }
+                    else if (fromCell.troop == toCell.troop)
+                    {
+                        // Las tropas son del mismo tipo, no se mueve
+                        Debug.Log($"Las tropas son del mismo tipo en ({toX}, {toY}). No se mueve.");
+                    }
+                    else
+                    {
+                        // La tropa enemiga es más fuerte, no se mueve
+                        Debug.Log($"La tropa enemiga es más fuerte en ({toX}, {toY}). No se mueve.");
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogError($"No hay tropa en la celda de origen: ({fromX}, {fromY}).");
+            }
+        }
+        else
+        {
+            Debug.LogError($"Coordenadas fuera de los límites del tablero: ({fromX}, {fromY}) o ({toX}, {toY}).");
+        }
+    }
+
 }
