@@ -17,8 +17,8 @@ public class AIController : MonoBehaviour
         // Obtener el estado actual del tablero
         board = BoardController.instance.GetBoardState();
 
-        // Llamar al algoritmo Minimax con poda Alfa-Beta
-        Minimax(board, 3, int.MinValue, int.MaxValue, true);
+        // Llamar al algoritmo Minimax con poda Alfa-Beta (aumentamos la profundidad a 6)
+        Minimax(board, 6, int.MinValue, int.MaxValue, true);
 
         // Colocar la tropa de la IA en el tablero
         PlaceAITroop();
@@ -67,7 +67,6 @@ public class AIController : MonoBehaviour
             Debug.Log("La IA no encontró un lugar válido para colocar una tropa.");
         }
     }
-
 
     private int Minimax(BoardState board, int depth, int alpha, int beta, bool maximizingPlayer)
     {
@@ -145,30 +144,95 @@ public class AIController : MonoBehaviour
 
     private void MoveOpponentTroops(BoardState board, int currentPlayer)
     {
-        // Implementar la lógica para mover las tropas enemigas
-        // (Similar a la función MoveOpponentTroops en BoardController)
+        List<BoardRow> rows = board.rows;
+        int direction = (currentPlayer == 1) ? -1 : 1;
+
+        for (int i = (direction == -1 ? 1 : rows.Count - 2);
+             direction == -1 ? i < rows.Count : i >= 0;
+             i -= direction)
+        {
+            for (int j = 0; j < rows[i].cells.Count; j++)
+            {
+                BoardCell cell = rows[i].cells[j];
+
+                // Verificar si la celda tiene una tropa y pertenece al jugador enemigo
+                if (cell.player != 0 && cell.player != currentPlayer && cell.troop != TroopType.None)
+                {
+                    int newX = i + direction;
+                    if (newX >= 0 && newX < rows.Count)
+                    {
+                        BoardCell targetCell = rows[newX].cells[j];
+
+                        // Verificar si hay una tropa enemiga en la celda de destino
+                        if (targetCell.troop != TroopType.None && targetCell.player != cell.player)
+                        {
+                            // Comparar el tipo de tropa
+                            if (cell.troop > targetCell.troop)
+                            {
+                                // La tropa actual es más fuerte, eliminar la tropa enemiga
+                                board.RemoveTroop(newX, j);
+                            }
+                            else if (cell.troop == targetCell.troop)
+                            {
+                                // Las tropas son del mismo tipo, no se mueve
+                                continue;
+                            }
+                            else
+                            {
+                                // La tropa enemiga es más fuerte, no se mueve
+                                continue;
+                            }
+                        }
+
+                        // Mover la tropa a la nueva posición
+                        board.MoveTroop(i, j, newX, j);
+                    }
+                }
+            }
+        }
     }
 
     private int EvaluateBoard(BoardState board)
     {
-        // Implementar una función de evaluación que calcule la puntuación del tablero
-        // para la IA. Esto puede incluir la cantidad de tropas, su posición, etc.
         int score = 0;
 
-        // Ejemplo simple: contar las tropas de la IA y restar las del jugador humano
-        foreach (var row in board.rows)
+        // Puntuación basada en la posición de las tropas
+        for (int i = 0; i < board.rows.Count; i++)
         {
-            foreach (var cell in row.cells)
+            for (int j = 0; j < board.rows[i].cells.Count; j++)
             {
+                BoardCell cell = board.rows[i].cells[j];
+
                 if (cell.player == aiPlayer)
                 {
-                    score += (int)cell.troop;
+                    // Calcular la distancia al objetivo del jugador 1 (fila 0)
+                    int distanceToGoal = i; // Para la IA, la distancia es la fila actual (más cerca de 0 es mejor)
+
+                    // Dar más valor a las tropas más cercanas al objetivo
+                    score += (int)cell.troop * (10 - distanceToGoal); // Tropas más cercanas valen más
+
+                    // Dar más valor a las tropas más fuertes
+                    score += (int)cell.troop * 2; // Las tropas grandes valen más
                 }
                 else if (cell.player == humanPlayer)
                 {
-                    score -= (int)cell.troop;
+                    // Calcular la distancia al objetivo de la IA (última fila)
+                    int distanceToGoal = (board.rows.Count - 1) - i; // Para el jugador 1, la distancia es la fila actual (más cerca de la última fila es mejor)
+
+                    // Restar puntos por las tropas del jugador humano
+                    score -= (int)cell.troop * (10 - distanceToGoal); // Tropas más cercanas al objetivo de la IA valen menos
                 }
             }
+        }
+
+        // Puntuación adicional si la IA está cerca de ganar
+        if (board.winner == aiPlayer)
+        {
+            score += 1000; // Gran recompensa por ganar
+        }
+        else if (board.winner == humanPlayer)
+        {
+            score -= 1000; // Gran penalización por perder
         }
 
         return score;

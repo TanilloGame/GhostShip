@@ -31,7 +31,7 @@ public class BoardController : MonoBehaviour
         if (board.playerTurn == 2)
         {
             Debug.Log("Es el turno de la IA (Jugador 2).");
-            
+
             // Buscar una casilla válida para colocar la tropa
             AIController aiController = FindObjectOfType<AIController>();
             if (aiController != null)
@@ -40,7 +40,7 @@ public class BoardController : MonoBehaviour
             }
 
             // Mover las tropas del jugador 1 después de que la IA coloque su tropa
-            MoveOpponentTroops(1); // Mover tropas del jugador 1 (enemigo de la IA)
+            MoveOpponentTroops(2); // Mover tropas del jugador 1 (enemigo de la IA)
         }
     }
 
@@ -63,7 +63,7 @@ public class BoardController : MonoBehaviour
             instance.board.rows[x].cells[y].player = currentPlayer;
 
             // Mover las tropas enemigas
-            instance.MoveOpponentTroops(2);
+            instance.MoveOpponentTroops(currentPlayer);
 
             // Regenerar el tablero
             instance.RegenerateBoard();
@@ -100,7 +100,7 @@ public class BoardController : MonoBehaviour
             }
 
             // Mover las tropas del jugador 1 después de que la IA coloque su tropa
-            MoveOpponentTroops(1); // Mover tropas del jugador 1 (enemigo de la IA)
+            MoveOpponentTroops(2); // Mover tropas del jugador 1 (enemigo de la IA)
         }
         else
         {
