@@ -17,8 +17,8 @@ public class AIController : MonoBehaviour
         // Obtener el estado actual del tablero
         board = BoardController.instance.GetBoardState();
 
-        // Llamar al algoritmo Minimax con poda Alfa-Beta (aumentamos la profundidad a 6)
-        Minimax(board, 15, int.MinValue, int.MaxValue, true);
+        // Llamar al algoritmo Minimax con poda Alfa-Beta
+        Minimax(board, 1000, int.MinValue, int.MaxValue, true);
 
         // Colocar la tropa de la IA en el tablero
         PlaceAITroop();
@@ -71,7 +71,7 @@ public class AIController : MonoBehaviour
     private int Minimax(BoardState board, int depth, int alpha, int beta, bool maximizingPlayer)
     {
         // Verificar si hemos alcanzado la profundidad máxima o si el juego ha terminado
-        if (depth == 0 || board.winner != 0)
+        if (depth == 1000 || board.winner != 0)
         {
             return EvaluateBoard(board);
         }
